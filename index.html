@@ -134,6 +134,13 @@
             loadedAt = Date.now();
             setTimeout(dismissLoader, Math.max(0, MIN_SPLASH - (loadedAt - splashShown)));
             sendSafeArea(); // push the real safe-area value in as soon as the child exists
+            requestTheme(); // ask the app what theme it's actually in, in case its
+                             // own startup message raced ahead of this listener
+        }
+        function requestTheme(){
+            var frame = document.getElementById('gasFrame');
+            if (!frame || !frame.contentWindow) return;
+            frame.contentWindow.postMessage({ type: 'sintaputo-request-theme' }, GAS_ORIGIN);
         }
         function dismissLoader(){
             document.getElementById('gasFrame').classList.add('ready');
