@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sintaputo">
   <meta name="theme-color" content="#0d2a2a">
   <meta name="description" content="Sintaputo — USC Finance Division">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
@@ -16,9 +17,9 @@
   <title>Sintaputo</title>
 
   <!-- Favicon: teal bg with white "S" mark -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d2a2a'/%3E%3Cpath d='M10 9 C10 6 12 4 15 4 L22 4 C25 4 27 6 27 9 L27 17 C27 20 25 22 22 22 L19 22 C16 22 14 20 14 17 L14 14 C14 11 12 9 9 9 Z' fill='white'/%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230d2a2a'/%3E%3Cpath d='M54 48 C54 32 62 22 78 22 L124 22 C140 22 148 32 148 48 L148 96 C148 112 140 122 124 122 L106 122 C90 122 82 112 82 96 L82 78 C82 62 74 52 58 52 Z' fill='white'/%3E%3C/svg%3E">
-
+    <!-- Homescreen icon — Sintaputo logo mark on black bg -->
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23000000'/%3E%3Cg fill='%232a9d8f' transform='translate(22,18) scale(0.76)'%3E%3Cpath d='M52 18 C52 18 100 18 100 18 C116 18 128 28 128 42 L128 58 L108 58 C96 58 86 68 86 80 L86 156 C86 168 76 178 64 178 L46 178 C32 178 22 168 22 156 L22 42 C22 28 36 18 52 18 Z'/%3E%3Crect x='52' y='42' width='62' height='18' rx='9' fill='%23000000'/%3E%3Crect x='62' y='72' width='42' height='16' rx='8' fill='%23000000'/%3E%3Cpath d='M118 72 C118 60 128 52 140 52 L158 52 C170 52 178 60 178 72 L178 158 C178 170 168 178 156 178 L138 178 C126 178 118 170 118 158 Z'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000000'/%3E%3Cg fill='%232a9d8f' transform='translate(4,3) scale(0.135)'%3E%3Cpath d='M52 18 C52 18 100 18 100 18 C116 18 128 28 128 42 L128 58 L108 58 C96 58 86 68 86 80 L86 156 C86 168 76 178 64 178 L46 178 C32 178 22 168 22 156 L22 42 C22 28 36 18 52 18 Z'/%3E%3Crect x='52' y='42' width='62' height='18' rx='9' fill='%23000000'/%3E%3Crect x='62' y='72' width='42' height='16' rx='8' fill='%23000000'/%3E%3Cpath d='M118 72 C118 60 128 52 140 52 L158 52 C170 52 178 60 178 72 L178 158 C178 170 168 178 156 178 L138 178 C126 178 118 170 118 158 Z'/%3E%3C/g%3E%3C/svg%3E">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -82,10 +83,11 @@
     <div class="ld-content">
       <div class="ld-wordmark">
         <!-- Isometric icon mark -->
-        <svg class="ld-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 28 C18 20 24 14 32 14 L68 14 C76 14 82 20 82 28 L82 72 C82 80 76 86 68 86 L52 86 C44 86 38 80 38 72 L38 52 C38 44 32 38 24 38 L18 38 Z" fill="white"/>
-          <rect x="38" y="24" width="30" height="8" rx="4" fill="rgba(0,0,0,.7)"/>
-          <rect x="48" y="40" width="20" height="8" rx="4" fill="rgba(0,0,0,.7)"/>
+        <svg class="ld-icon" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M52 18 C52 18 100 18 100 18 C116 18 128 28 128 42 L128 58 L108 58 C96 58 86 68 86 80 L86 156 C86 168 76 178 64 178 L46 178 C32 178 22 168 22 156 L22 42 C22 28 36 18 52 18 Z" fill="white"/>
+          <rect x="52" y="42" width="62" height="18" rx="9" fill="rgba(0,0,0,.6)"/>
+          <rect x="62" y="72" width="42" height="16" rx="8" fill="rgba(0,0,0,.6)"/>
+          <path d="M118 72 C118 60 128 52 140 52 L158 52 C170 52 178 60 178 72 L178 158 C178 170 168 178 156 178 L138 178 C126 178 118 170 118 158 Z" fill="white"/>
         </svg>
         <span class="ld-brand">sintaputo</span>
       </div>
