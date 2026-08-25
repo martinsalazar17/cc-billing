@@ -51,15 +51,23 @@
           - --bg is a variable, not a hardcoded value, so the same
             two rules serve both themes; JS below flips it.
         */
+        :root {
+            /* Default/fallback only — overwritten with a real measured
+               pixel value by JS below, because 100dvh alone has proven
+               unreliable on some iOS standalone-PWA WKWebView builds
+               (the initial measurement comes back short and no resize
+               event fires afterward to correct it). */
+            --real-vh: 100dvh;
+        }
         html, body {
             width: 100%;
-            height: 100%;
-            min-height: 100dvh;
+            height: var(--real-vh);
+            min-height: var(--real-vh);
             margin: 0;
             padding: 0;
-            /* Belt-and-suspenders: if 100dvh ever falls short of the true
-               viewport on a given iOS build, whatever sliver of body shows
-               below the fixed iframe is still themed correctly instead of
+            /* Belt-and-suspenders: if the measured height ever falls short
+               of the true viewport, whatever sliver of body shows below
+               the fixed iframe is still themed correctly instead of
                exposing raw canvas. */
             padding-bottom: env(safe-area-inset-bottom, 0px);
             overflow: hidden;
@@ -116,15 +124,10 @@
             position: fixed;
             inset: 0;
             width: 100%;
-            /* 100dvh is the starting guess only. Several mobile WebViews
-               (iOS standalone PWA, some Android Chrome/WebView builds)
-               under-report dvh and leave a sliver of the real viewport
-               uncovered at the bottom, which exposes this page's own
-               background behind the iframe. JS below measures the true
-               visual viewport in pixels and overrides this on load and
-               on every resize, so the iframe always reaches the real
-               edge regardless of a given browser's dvh support. */
-            height: 100dvh;
+            /* Same --real-vh measured value as html/body above, so the
+               iframe and the page behind it always agree on the true
+               viewport height and never expose a gap between them. */
+            height: var(--real-vh);
             border: none;
             opacity: 0;
             transition: opacity .35s ease;
@@ -201,27 +204,41 @@
 
         /*
           REAL VIEWPORT HEIGHT (dvh FALLBACK FIX)
-          Measures the true visual viewport in pixels and applies it
-          directly to #gasFrame's inline style, overriding the CSS
-          100dvh guess. Re-measures on resize, orientation change, and
-          visualViewport resize (covers on-screen keyboard, browser
-          chrome show/hide, and the standalone-PWA home-indicator cases
-          where dvh alone came up short and exposed a strip of this
-          page's own background underneath the iframe).
+          Sets --real-vh (used by html/body AND #gasFrame) from a
+          measured pixel value instead of trusting 100dvh outright.
+
+          A single measurement on load isn't enough: iOS standalone
+          PWAs (WKWebView) have a documented quirk where the FIRST
+          reading of innerHeight/visualViewport.height can come back
+          short, and no resize event fires afterward to self-correct —
+          the wrong number just sticks. So instead of measuring once,
+          this re-measures repeatedly over the first ~2 seconds after
+          load, plus on every lifecycle event that could plausibly
+          change or reveal the true viewport (resize, orientation
+          change, tab/app becoming visible again, bfcache restores).
         */
-        function setFrameHeight(){
-            var frame = document.getElementById('gasFrame');
-            if (!frame) return;
+        function measureAndApplyHeight(){
             var h = (window.visualViewport && window.visualViewport.height)
                 ? window.visualViewport.height
                 : window.innerHeight;
-            frame.style.height = h + 'px';
+            document.documentElement.style.setProperty('--real-vh', h + 'px');
         }
-        setFrameHeight();
-        window.addEventListener('resize', setFrameHeight);
-        window.addEventListener('orientationchange', function(){ setTimeout(setFrameHeight, 150); });
+        function scheduleHeightRemeasures(){
+            measureAndApplyHeight();
+            [50, 150, 300, 600, 1000, 2000].forEach(function(ms){
+                setTimeout(measureAndApplyHeight, ms);
+            });
+        }
+        scheduleHeightRemeasures();
+        window.addEventListener('load', scheduleHeightRemeasures);
+        window.addEventListener('pageshow', scheduleHeightRemeasures); // bfcache restores
+        window.addEventListener('resize', measureAndApplyHeight);
+        window.addEventListener('orientationchange', function(){ setTimeout(scheduleHeightRemeasures, 150); });
+        document.addEventListener('visibilitychange', function(){
+            if (!document.hidden) scheduleHeightRemeasures();
+        });
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', setFrameHeight);
+            window.visualViewport.addEventListener('resize', measureAndApplyHeight);
         }
 
         var MIN_SPLASH = 1400, loadedAt = null, splashShown = Date.now();
