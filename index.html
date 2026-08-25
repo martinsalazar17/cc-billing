@@ -2,6 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!--
+      FOUC GUARD — runs synchronously before first paint.
+      Reads the last theme the app told us about (cached from a
+      previous successful postMessage) and applies it immediately,
+      so the very first frame is already correctly colored instead
+      of falling back to the hardcoded #000000 default while we
+      wait for the iframe to load and hand-shake with us again.
+    -->
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem('sintaputo_theme');
+                if (t === 'light' || t === 'dark') {
+                    document.documentElement.setAttribute('data-theme', t);
+                }
+            } catch (e) {}
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,6 +57,11 @@
             min-height: 100dvh;
             margin: 0;
             padding: 0;
+            /* Belt-and-suspenders: if 100dvh ever falls short of the true
+               viewport on a given iOS build, whatever sliver of body shows
+               below the fixed iframe is still themed correctly instead of
+               exposing raw canvas. */
+            padding-bottom: env(safe-area-inset-bottom, 0px);
             overflow: hidden;
             background: var(--bg, #000000);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -127,7 +150,47 @@
     ></iframe>
 
     <script>
-        var GAS_ORIGIN = 'https://script.google.com'; // must match the iframe's actual origin exactly
+        /*
+          ORIGIN HANDLING
+          A GAS /exec URL is a REDIRECT — the iframe's actual document
+          ends up served from a sandboxed *.googleusercontent.com
+          origin (something like n-xxxxxxxx.script.googleusercontent.com),
+          not from script.google.com itself. Matching postMessage
+          origins against the literal script.google.com string means
+          the check silently fails 100% of the time and every message
+          from the child (theme changes, etc.) gets dropped — which is
+          what was causing the wrapper to stay stuck on its hardcoded
+          black fallback regardless of the app's actual theme.
+
+          Fix: accept messages from either the pre-redirect host or
+          the *.googleusercontent.com sandbox host, and remember the
+          child's real origin the first time we see it so outgoing
+          messages can target it precisely from then on.
+        */
+        var GAS_EXEC_ORIGIN = 'https://script.google.com';
+        var childOrigin = null; // learned from the first trusted message we receive
+
+        function isTrustedOrigin(origin){
+            if (!origin) return false;
+            if (origin === GAS_EXEC_ORIGIN) return true;
+            try {
+                var host = new URL(origin).hostname;
+                return /\.googleusercontent\.com$/.test(host);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Target origin for messages we SEND to the iframe. Before we've
+        // heard from the child at least once we don't know its exact
+        // sandboxed origin, so we fall back to '*' for those first couple
+        // of pings only (the payloads — a pixel value and a theme
+        // request — carry nothing sensitive). Once childOrigin is known,
+        // every send after that is precisely targeted.
+        function frameTargetOrigin(){
+            return childOrigin || '*';
+        }
+
         var MIN_SPLASH = 1400, loadedAt = null, splashShown = Date.now();
 
         function onFrameLoad(){
@@ -140,7 +203,7 @@
         function requestTheme(){
             var frame = document.getElementById('gasFrame');
             if (!frame || !frame.contentWindow) return;
-            frame.contentWindow.postMessage({ type: 'sintaputo-request-theme' }, GAS_ORIGIN);
+            frame.contentWindow.postMessage({ type: 'sintaputo-request-theme' }, frameTargetOrigin());
         }
         function dismissLoader(){
             document.getElementById('gasFrame').classList.add('ready');
@@ -170,7 +233,7 @@
             if (!frame || !frame.contentWindow) return;
             frame.contentWindow.postMessage(
                 { type: 'sintaputo-safe-area', bottom: measureSafeAreaBottom() },
-                GAS_ORIGIN
+                frameTargetOrigin()
             );
         }
         window.addEventListener('resize', sendSafeArea);
@@ -187,13 +250,19 @@
           show the old theme's background.
         */
         window.addEventListener('message', function(e){
-            if (e.origin !== GAS_ORIGIN) return;
+            if (!isTrustedOrigin(e.origin)) return;
+            // Remember the child's real origin so future sends target it
+            // precisely instead of relying on '*'.
+            childOrigin = e.origin;
             if (e.data && e.data.type === 'sintaputo-theme') {
                 var theme = e.data.theme === 'light' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.getElementById('themeColorMeta').setAttribute(
                     'content', theme === 'light' ? '#f2f2f7' : '#000000'
                 );
+                // Cache it so the FOUC guard can apply it instantly on
+                // the very next load, before the iframe even exists.
+                try { localStorage.setItem('sintaputo_theme', theme); } catch (err) {}
             }
         });
     </script>
