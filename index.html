@@ -38,7 +38,6 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000000'/%3E%3Cg fill='%232a9d8f' transform='translate(4,3) scale(0.135)'%3E%3Cpath d='M52 18 C52 18 100 18 100 18 C116 18 128 28 128 42 L128 58 L108 58 C96 58 86 68 86 80 L86 156 C86 168 76 178 64 178 L46 178 C32 178 22 168 22 156 L22 42 C22 28 36 18 52 18 Z'/%3E%3Crect x='52' y='42' width='62' height='18' rx='9' fill='%23000000'/%3E%3Crect x='62' y='72' width='42' height='16' rx='8' fill='%23000000'/%3E%3Cpath d='M118 72 C118 60 128 52 140 52 L158 52 C170 52 178 60 178 72 L178 158 C178 170 168 178 156 178 L138 178 C126 178 118 170 118 158 Z'/%3E%3C/g%3E%3C/svg%3E">
 
     <style>
-        html, body { background: hotpink !important; }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         /*
@@ -117,6 +116,14 @@
             position: fixed;
             inset: 0;
             width: 100%;
+            /* 100dvh is the starting guess only. Several mobile WebViews
+               (iOS standalone PWA, some Android Chrome/WebView builds)
+               under-report dvh and leave a sliver of the real viewport
+               uncovered at the bottom, which exposes this page's own
+               background behind the iframe. JS below measures the true
+               visual viewport in pixels and overrides this on load and
+               on every resize, so the iframe always reaches the real
+               edge regardless of a given browser's dvh support. */
             height: 100dvh;
             border: none;
             opacity: 0;
@@ -190,6 +197,31 @@
         // every send after that is precisely targeted.
         function frameTargetOrigin(){
             return childOrigin || '*';
+        }
+
+        /*
+          REAL VIEWPORT HEIGHT (dvh FALLBACK FIX)
+          Measures the true visual viewport in pixels and applies it
+          directly to #gasFrame's inline style, overriding the CSS
+          100dvh guess. Re-measures on resize, orientation change, and
+          visualViewport resize (covers on-screen keyboard, browser
+          chrome show/hide, and the standalone-PWA home-indicator cases
+          where dvh alone came up short and exposed a strip of this
+          page's own background underneath the iframe).
+        */
+        function setFrameHeight(){
+            var frame = document.getElementById('gasFrame');
+            if (!frame) return;
+            var h = (window.visualViewport && window.visualViewport.height)
+                ? window.visualViewport.height
+                : window.innerHeight;
+            frame.style.height = h + 'px';
+        }
+        setFrameHeight();
+        window.addEventListener('resize', setFrameHeight);
+        window.addEventListener('orientationchange', function(){ setTimeout(setFrameHeight, 150); });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setFrameHeight);
         }
 
         var MIN_SPLASH = 1400, loadedAt = null, splashShown = Date.now();
