@@ -20,7 +20,7 @@
             } catch (e) {}
         })();
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -134,6 +134,10 @@
         }
         #gasFrame.ready { opacity: 1; }
     </style>
+    <style>
+        /* No pinch / double-tap zoom (one-finger scrolling still works) */
+        html,body{touch-action:pan-x pan-y;}
+    </style>
 </head>
 <body>
     <div id="loader">
@@ -153,7 +157,7 @@
 
     <iframe
         id="gasFrame"
-        src="https://script.google.com/macros/s/AKfycbzqmm8weiU2sQlxZgWjgOMnySPKBMvyTFFWCX4d7LMIQQnn_Z3YO9SnzUKH1GjkM9MoCg/exec"
+        src="https://script.google.com/macros/s/AKfycbzqmm8weiU2sQlxZgWjgOMnySPKBMvyTFFWCX4d7LMIQQnn_Z3YO9SnzUKH1GjkM9MoCg/exec?v=2"
         allow="clipboard-read; clipboard-write"
         loading="eager"
         title="Sintaputo"
@@ -316,5 +320,21 @@
             }
         });
     </script>
+<script>
+(function(){
+  /* No-zoom guard. iOS Safari ignores user-scalable=no, so pinch is also
+     blocked at the event level. Plain one-finger scrolling is untouched. */
+  var o={passive:false};
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){
+    document.addEventListener(t,function(e){e.preventDefault();},o);   /* iOS pinch */
+  });
+  document.addEventListener('touchmove',function(e){
+    if(e.touches&&e.touches.length>1)e.preventDefault();               /* 2+ fingers */
+  },o);
+  window.addEventListener('wheel',function(e){
+    if(e.ctrlKey)e.preventDefault();                                   /* trackpad pinch / ctrl+scroll */
+  },o);
+})();
+</script>
 </body>
 </html>
